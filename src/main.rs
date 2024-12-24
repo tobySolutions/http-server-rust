@@ -51,6 +51,7 @@ fn handle_connection(mut stream: std::net::TcpStream, directory: Option<PathBuf>
     let request_line = request.lines().next().unwrap_or("");
 
     let parts: Vec<&str> = request_line.split_whitespace().collect();
+    let method = parts.get(0).unwrap_or(&"");
     let path = parts.get(1).unwrap_or(&"");
 
 
@@ -79,16 +80,44 @@ fn handle_connection(mut stream: std::net::TcpStream, directory: Option<PathBuf>
             let filename = &path[7..];
             let file_path = dir.join(filename);
 
-            match fs::read(&file_path) {
-                Ok(contents ) => {
-                    format!(
-                        "HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: {}\r\n\r\n{}",
-                        contents.len(),
-                        String::from_utf8_lossy(&contents)
-                    )
-                }
-                Err(_) => "HTTP/1.1 404 Not Found\r\n\r\n".to_string()
+            match *method {
+                "GET" => {
+                    match fs::read(&file_path) {
+                        Ok(contents ) => {
+                            format!(
+                                "HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: {}\r\n\r\n{}",
+                                contents.len(),
+                                String::from_utf8_lossy(&contents)
+                            )
+                        }
+                        Err(_) => "HTTP/1.1 404 Not Found\r\n\r\n".to_string()
+                    }
+                },
+                "POST" => {
+                    let content_length: usize = lines.iter()
+                        .find(|line| line.to_lowercase().starts_with("content-length: "))
+                        .and_then(|line| line.splitn(2, ": ").nth(1))
+                        .and_then(|len| len.parse().ok())
+                        .unwrap_or(0);
+
+                        if let Some(body_start) = request.find("\r\n\r\n") {
+                            let body = &request[body_start + 4..body_start + 4 + content_length];
+                            
+                           
+                            if let Err(_) = fs::write(&file_path, body) {
+                                "HTTP/1.1 500 Internal Server Error\r\n\r\n".to_string()
+                            } else {
+                                "HTTP/1.1 201 Created\r\n\r\n".to_string()
+                            }
+                        } else {
+                            "HTTP/1.1 400 Bad Request\r\n\r\n".to_string()
+                        }
+
+                },
+                _ => "HTTP/1.1 405 Method Not Allowed\r\n\r\n".to_string()
             }
+
+          
         } else {
             "HTTP/1.1 404 Not Found\r\n\r\n".to_string()
         }
