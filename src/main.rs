@@ -19,6 +19,7 @@ fn main() {
                 stream.read(&mut buffer).unwrap();
 
                 let request = String::from_utf8_lossy(&buffer);
+                let lines: Vec<&str> = request.lines().collect();
                 let request_line = request.lines().next().unwrap_or("");
 
                 let parts: Vec<&str> = request_line.split_whitespace().collect();
@@ -34,7 +35,18 @@ fn main() {
                         echo_string.len(),
                         echo_string
                     )
-                } else {
+                } else if *path == "/user-agent" {
+                    let user_agent = lines.iter()
+                    .find(|line| line.to_lowercase().starts_with("user-agent: "))
+                    .map(|line| line.splitn(2, ": ").nth(1).unwrap_or(""))
+                    .unwrap_or("");
+
+                    format!(
+                        "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {}\r\n\r\n{}",
+                        user_agent.len(),
+                        user_agent
+                    )
+                }else {
                     "HTTP/1.1 404 Not Found\r\n\r\n".to_string()
                 };
 
