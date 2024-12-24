@@ -7,11 +7,8 @@ use std::path::PathBuf;
 use std::fs;
 
 fn main() {
-    // You can use print statements as follows for debugging, they'll be visible when running tests.
     println!("Logs from your program will appear here!");
 
-    // Uncomment this block to pass the first stage
-    //
     let args: Vec<String> = env::args().collect();
     let mut directory = None;
 
@@ -130,3 +127,8 @@ fn handle_connection(mut stream: std::net::TcpStream, directory: Option<PathBuf>
         println!("Failed to write to connection: {}", e);
     }
 }
+
+
+
+// origin  https://git.codecrafters.io/b0c049671a193d1a (fetch)
+// origin  https://git.codecrafters.io/b0c049671a193d1a (push)

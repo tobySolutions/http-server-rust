@@ -1,38 +1,84 @@
-[![progress-banner](https://backend.codecrafters.io/progress/http-server/c3e4c4e9-42d5-4efa-8283-dcfedbdcc962)](https://app.codecrafters.io/users/codecrafters-bot?r=2qF)
+# HTTP Server in Rust
 
-This is a starting point for Rust solutions to the
-["Build Your Own HTTP server" Challenge](https://app.codecrafters.io/courses/http-server/overview).
+A ground-up implementation of an HTTP/1.1 server in Rust, demonstrating low-level networking, concurrent programming, and file system operations.
 
-[HTTP](https://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol) is the
-protocol that powers the web. In this challenge, you'll build a HTTP/1.1 server
-that is capable of serving multiple clients.
+## Features
 
-Along the way you'll learn about TCP servers,
-[HTTP request syntax](https://www.w3.org/Protocols/rfc2616/rfc2616-sec5.html),
-and more.
+- **HTTP/1.1 Protocol Support**: Implements core HTTP/1.1 specifications
+- **Concurrent Connections**: Handles multiple client connections simultaneously using Rust's threading
+- **Request Routing**: Supports multiple endpoints including:
+  - `/` - Basic server health check
+  - `/echo/{string}` - Echoes back the provided string
+  - `/user-agent` - Returns the client's User-Agent
+  - `/files/{filename}` - File operations (GET and POST)
+- **File Operations**: 
+  - GET: Retrieve file contents
+  - POST: Create new files with provided content
+- **Header Processing**: Handles standard HTTP headers including Content-Type and Content-Length
 
-**Note**: If you're viewing this repo on GitHub, head over to
-[codecrafters.io](https://codecrafters.io) to try the challenge.
+## Technical Details
 
-# Passing the first stage
+- Built using Rust's standard library
+- Uses `TcpListener` for network communication
+- Implements thread-based concurrency
+- Handles both static and dynamic responses
+- Supports binary file content via `application/octet-stream`
 
-The entry point for your HTTP server implementation is in `src/main.rs`. Study
-and uncomment the relevant code, and push your changes to pass the first stage:
+## Usage
 
-```sh
-git commit -am "pass 1st stage" # any msg
-git push origin master
+### Building the Server
+
+```bash
+cargo build --release
 ```
 
-Time to move on to the next stage!
+### Running the Server
 
-# Stage 2 & beyond
+Basic server start:
+```bash
+./target/release/http-server
+```
 
-Note: This section is for stages 2 and beyond.
+With file directory support:
+```bash
+./target/release/http-server --directory /path/to/files
+```
 
-1. Ensure you have `cargo (1.82)` installed locally
-1. Run `./your_program.sh` to run your program, which is implemented in
-   `src/main.rs`. This command compiles your Rust project, so it might be slow
-   the first time you run it. Subsequent runs will be fast.
-1. Commit your changes and run `git push origin master` to submit your solution
-   to CodeCrafters. Test output will be streamed to your terminal.
+### Example Requests
+
+GET request:
+```bash
+curl -v http://localhost:4221/
+```
+
+Echo endpoint:
+```bash
+curl -v http://localhost:4221/echo/hello-world
+```
+
+File upload:
+```bash
+curl -v --data "content" -H "Content-Type: application/octet-stream" http://localhost:4221/files/example.txt
+```
+
+## Implementation Details
+
+- **TCP Connection Handling**: Uses Rust's `TcpListener` for accepting connections
+- **Request Parsing**: Custom implementation of HTTP request parsing
+- **Response Formation**: Properly formatted HTTP responses with headers
+- **Concurrency**: Thread-per-connection model for handling multiple clients
+- **Error Handling**: Robust error handling for file operations and network issues
+
+## Learning Outcomes
+
+This project demonstrates:
+- Low-level networking in Rust
+- HTTP protocol implementation
+- Concurrent programming patterns
+- File system operations
+- Error handling in network applications
+- Request/Response parsing and formatting
+
+## Contributing
+
+Feel free to submit issues and enhancement requests!
