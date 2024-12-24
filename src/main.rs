@@ -26,9 +26,16 @@ fn main() {
 
 
                 let response = if *path == "/" {
-                    "HTTP/1.1 200 OK\r\n\r\n"
+                    "HTTP/1.1 200 OK\r\n\r\n".to_string()
+                } else if path.starts_with("/echo/"){
+                    let echo_string= &path[6..];
+                    format!(
+                        "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {}\r\n\r\n{}",
+                        echo_string.len(),
+                        echo_string
+                    )
                 } else {
-                    "HTTP/1.1 404 Not Found\r\n\r\n"
+                    "HTTP/1.1 404 Not Found\r\n\r\n".to_string()
                 };
 
                 if let Err(e) = stream.write_all(response.as_bytes()) {
