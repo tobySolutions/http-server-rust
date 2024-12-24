@@ -2,6 +2,9 @@
 use std::net::TcpListener;
 use std::io::{Read, Write};
 use std::thread;
+use std::env;
+use std::path::PathBuf;
+use std::fs;
 
 fn main() {
     // You can use print statements as follows for debugging, they'll be visible when running tests.
@@ -9,6 +12,15 @@ fn main() {
 
     // Uncomment this block to pass the first stage
     //
+    let args: Vec<String> = env::args().collect();
+    let mut directory = None;
+
+    for i in 0..args.len() - 1 {
+        if args[i] == "--directory" {
+            directory = Some(PathBuf::from(&args[i + 1]));
+        }
+    }
+
     let listener = TcpListener::bind("127.0.0.1:4221").unwrap();
     //
     for stream in listener.incoming() {
@@ -16,8 +28,10 @@ fn main() {
             Ok(stream) => {
                 println!("accepted new connection");
 
+                let dir = directory.clone();
+
                 thread::spawn(move || {
-                    handle_connection(stream);
+                    handle_connection(stream, dir);
                 });
             }
             Err(e) => {
@@ -28,7 +42,7 @@ fn main() {
 }
 
 
-fn handle_connection(mut stream: std::net::TcpStream) {
+fn handle_connection(mut stream: std::net::TcpStream, directory: Option<PathBuf>) {
     let mut buffer = [0; 1024];
     stream.read(&mut buffer).unwrap();
 
@@ -60,7 +74,26 @@ fn handle_connection(mut stream: std::net::TcpStream) {
             user_agent.len(),
             user_agent
         )
-    }else {
+    } else if path.starts_with("/files/") {
+        if let Some(dir) = directory {
+            let filename = &path[7..];
+            let file_path = dir.join(filename);
+
+            match fs::read(&file_path) {
+                Ok(contents ) => {
+                    format!(
+                        "HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: {}\r\n\r\n{}",
+                        contents.len(),
+                        String::from_utf8_lossy(&contents)
+                    )
+                }
+                Err(_) => "HTTP/1.1 404 Not Found\r\n\r\n".to_string()
+            }
+        } else {
+            "HTTP/1.1 404 Not Found\r\n\r\n".to_string()
+        }
+    }    
+    else {
         "HTTP/1.1 404 Not Found\r\n\r\n".to_string()
     };
 
